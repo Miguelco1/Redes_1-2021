@@ -196,7 +196,7 @@ class Ui_MainWindow(object):
             self.pushButton.setEnabled(True)
             self.pushButton_3.setEnabled(True)
 
-            self.server_address = ('127.0.0.1', 5015)
+            self.server_address = ('25.94.104.82', 5015)
             print('connecting to {} port {}'.format(*self.server_address))
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.connect(self.server_address)

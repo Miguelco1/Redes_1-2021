@@ -21,6 +21,7 @@ def service_connection(key, mask):
     global count_connect
     sock = key.fileobj
     data_add=key.data
+    name_pass=0
     if mask & selectors.EVENT_READ:
         try:
             data = sock.recv(2048)  # Should be ready to read
@@ -40,12 +41,15 @@ def service_connection(key, mask):
                         opcode_ack=[1,1] 
                         array=bytearray(opcode_ack)
                         sock.sendall(array+end_byte)
+
                         pass
                     else:
                         if count_connect==0:
                             count_connect=1
                         else:
                             count_connect = count_connect << 1
+
+
                         count_aux=bytearray([count_connect])
                         name={"name":decode_name,"addr":data_add.addr,"sock":sock,"count":count_aux}
                         name_list.append(name)
@@ -107,6 +111,7 @@ def service_connection(key, mask):
                     del_sock= next((item for item in name_list if item["addr"] == data_add.addr), False)
                     name_del=del_sock.get("name")
                     name_list.remove(del_sock)
+                    name_pass=1
                 except:
                     pass
                 print(date_time,">>Connection from",data_add.addr,"closed")
@@ -117,31 +122,36 @@ def service_connection(key, mask):
                 sel.unregister(sock)
                 sock.close()
                 sock_list.remove(sock)
-                count_connect = count_connect >> 1
-                new_count=1
-                for update_del_name_list in name_list:
-                    aux_count=bytearray([new_count])
-                    update_del_name_list["count"]=aux_count
-                    new_count=new_count << 1
+                if (name_pass==1):
+                    count_connect = count_connect >> 1
+                    new_count=1
+                    for update_del_name_list in name_list:
+                        aux_count=bytearray([new_count])
+                        update_del_name_list["count"]=aux_count
+                        new_count=new_count << 1
 
-                opcode_ack=bytearray([3]) 
-                send_init_online=opcode_ack
-                sep_aux=bytearray(" ",'utf-8')
+                    opcode_ack=bytearray([3]) 
+                    send_init_online=opcode_ack
+                    sep_aux=bytearray(" ",'utf-8')
 
-                for item in name_list:
-                    aux=bytearray(item.get("count"))
-                    name_aux=bytearray(item.get("name"),'utf-8')
-                    send_init_online=send_init_online+sep_aux+aux+sep_aux+name_aux
-                for conn in sock_list:
-                    conn.sendall(send_init_online+end_byte)
+                    for item in name_list:
+                        aux=bytearray(item.get("count"))
+                        name_aux=bytearray(item.get("name"),'utf-8')
+                        send_init_online=send_init_online+sep_aux+aux+sep_aux+name_aux
+                    for conn in sock_list:
+                        conn.sendall(send_init_online+end_byte)
 
 
-                opcode_ack=bytearray([2])
-                disconnect_msg=name_del+" ---> Saiu do chat!"
-                disconnect_msg=opcode_ack+bytearray(disconnect_msg,"utf-8") 
-                for conn in sock_list:
-                    conn.sendall(disconnect_msg+end_byte)
+                    opcode_ack=bytearray([2])
+
+                    disconnect_msg=name_del+" ---> Saiu do chat!"
+                    disconnect_msg=opcode_ack+bytearray(disconnect_msg,"utf-8") 
+                    for conn in sock_list:
+                        conn.sendall(disconnect_msg+end_byte)
+
                 return()
+
+
             #Verifica se o id da conexão já está no webserver,
             #Se não estiver coloca ele lá
 
@@ -168,7 +178,7 @@ sel = selectors.DefaultSelector()
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the port
-server_address = ('127.0.0.1', 5015)
+server_address = ('25.94.104.82', 5015)
 print('starting up on {} port {}'.format(*server_address))
 s.bind(server_address)
 
